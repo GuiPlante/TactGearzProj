@@ -43,7 +43,7 @@ const reviewStockLevel = () => {
     }
     const rows = productsTable.querySelectorAll('tr');
     let safetyStockMet = true;
-    for (let i = 1; i < rows.length; i++) {
+    for (let i = 0; i < rows.length; i++) {
         const cells = rows[i].querySelectorAll('td');
         const quantityInStore = parseInt(cells[8].textContent);
         const quantityInWarehouse = parseInt(cells[9].textContent);
@@ -57,16 +57,37 @@ const reviewStockLevel = () => {
 };
 
 // Function to add a product
-const addProduct = () => {
-    const productDetails = ['ID', 'name', 'color', 'size', 'price', 'barcode', 'weight', 'category', 'quantity in-store', 'quantity in warehouse', 'safety stock level'];
-    const productItem = document.createElement('tr');
-    productDetails.forEach(detail => {
-        const value = prompt(`Enter product ${detail}:`);
-        const cell = document.createElement('td');
-        cell.textContent = value;
-        productItem.appendChild(cell);
-    });
-    document.getElementById('productTableBody').appendChild(productItem);
+const addProduct = async () => {
+    try {
+        const purchaseOrderDetails = ['ID', 'name', 'color', 'size', 'price', 'barcode', 'weight', 'category', 'quantity in-store', 'quantity in warehouse', 'safety stock level'];
+        const newPurchaseOrder = {};
+        
+        purchaseOrderDetails.forEach(detail => {
+            const value = prompt(`Enter ${detail}:`);
+            newPurchaseOrder[detail.toLowerCase().replace(/\s+/g, '_')] = value;
+        });
+
+        // Save new purchase order to JSON file
+        const response = await fetch('productDB.json');
+        const purchaseOrdersData = await response.json();
+        
+        purchaseOrdersData.push(newPurchaseOrder);
+
+        const updatedData = JSON.stringify(purchaseOrdersData, null, 2);
+        await fetch('http://localhost:3000/update', {
+            method: 'POST',
+            body: updatedData,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        alert('Product added successfully.');
+
+    } catch (error) {
+        console.error('Error adding purchase order:', error);
+        alert('Error adding purchase order. Please try again.');
+    }
+    refreshProducts();
 };
 
 // Function to show toast
